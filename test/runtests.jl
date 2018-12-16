@@ -110,4 +110,14 @@ using Statistics
         result2 = chain(data2, isnan, Impute.Interpolate(), Impute.Drop(); limit=1.0)
         @test result1 == result2
     end
+
+    @testset "SVD" begin
+        data = Matrix(dataset("Ecdat", "Electricity"))
+        for i in 1:50
+            idx = rand(1:length(data))
+            data[idx] = missing
+        end
+
+        result = Impute.svd(data)
+    end
 end

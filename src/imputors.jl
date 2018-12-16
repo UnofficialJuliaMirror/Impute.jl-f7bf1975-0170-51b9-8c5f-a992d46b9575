@@ -75,6 +75,6 @@ function impute!(imp::Imputor, ctx::Context, data::DataFrame)
 end
 
 
-for file in ("drop.jl", "locf.jl", "nocb.jl", "interp.jl", "fill.jl", "chain.jl")
+for file in ("drop.jl", "locf.jl", "nocb.jl", "interp.jl", "fill.jl", "chain.jl", "svd.jl")
     include(joinpath("imputors", file))
 end

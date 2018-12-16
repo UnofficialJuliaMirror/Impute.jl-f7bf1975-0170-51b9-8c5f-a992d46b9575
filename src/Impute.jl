@@ -5,6 +5,8 @@ using Statistics
 
 import DataFrames: DataFrameRow
 import Base.Iterators
+import LinearAlgebra
+using LinearAlgebra: Diagonal
 
 export impute, impute!, chain, chain!, drop, drop!, interp, interp!, ImputeError
 
@@ -33,6 +35,7 @@ const global imputation_methods = Dict{Symbol, Type}(
     :fill => Fill,
     :locf => LOCF,
     :nocb => NOCB,
+    :svd => SVD,
 )
 
 """
@@ -141,5 +144,19 @@ interp!(data::Dataset; limit=1.0) = impute!(data, :interp; limit=limit)
 Utility method for `impute(data, :interp; limit=limit)`
 """
 interp(data::Dataset; limit=1.0) = impute(data, :interp; limit=limit)
+
+"""
+    svd!(data::AbstractMatrix; limit=1.0)
+
+Utility method for `impute!(data, :svd; limit=limit)`
+"""
+svd!(data::AbstractMatrix; limit=1.0) = impute!(data, :svd; limit=limit)
+
+"""
+    svd(data::AbstractMatrix; limit=1.0)
+
+Utility method for `impute(data, :svd; limit=limit)`
+"""
+svd(data::AbstractMatrix; limit=1.0) = impute(data, :svd; limit=limit)
 
 end  # module
