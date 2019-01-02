@@ -13,7 +13,7 @@ struct SVD <: Imputor
     verbose::Bool
 end
 
-function SVD(; init=Fill(), rank=nothing, tol=1e-10, maxiter=10000, limits=nothing, verbose=true)
+function SVD(; init=Fill(), rank=nothing, tol=1e-10, maxiter=100, limits=nothing, verbose=true)
     SVD(init, rank, tol, maxiter, limits, verbose)
 end
 
@@ -25,7 +25,7 @@ end
 function impute!(imp::SVD, ctx::Context, data::AbstractMatrix{<:Union{T, Missing}}) where T<:Real
     n, p = size(data)
     k = imp.rank === nothing ? 0 : min(imp.rank, p-1)
-    S = zeros(T, p)
+    S = zeros(T, min(n, p))
     X = zeros(T, n, p)
 
     # Get our before and after views of our missing and non-missing data
@@ -42,15 +42,17 @@ function impute!(imp::SVD, ctx::Context, data::AbstractMatrix{<:Union{T, Missing
 
     C = sum((mdata - mX) .^ 2) / sum(mdata .^ 2)
     err = mean(abs.(odata - oX))
-    @info("Before: Diff=$(sum(mdata - mX)), MAE=$err, convergence=$C, normsq=$(sum(mdata .^2)), $(mX[1])")
+    @info("Before: Diff=$(sum(mdata - mX)), MAE=$err, convergence=$C, normsq=$(sum(mdata .^ 2)), $(mX[1])")
 
     for i in 1:imp.maxiter
         if imp.rank === nothing
-            k = min(k + 1, p - 1)
+            k = min(k + 1, p - 1, n - 1)
         end
 
         # Compute the SVD and produce a low-rank approximation of the data
         F = LinearAlgebra.svd(data)
+        # println(join([size(S), size(F.S), size(F.U), size(F.Vt)], ", "))
+
         S[1:k] .= F.S[1:k]
         X = F.U * Diagonal(S) * F.Vt
 
@@ -63,12 +65,13 @@ function impute!(imp::SVD, ctx::Context, data::AbstractMatrix{<:Union{T, Missing
         odata = data[omask]
         oX = X[omask]
 
+        # println(join([size(mdata), size(mX)], ", "))
         C = sum((mdata - mX) .^ 2) / sum(mdata .^ 2)
 
         # Print the error between reconstruction and observed inputs
         if imp.verbose
             err = mean(abs.(odata - oX))
-            @info("Iteration $i: Diff=$(sum(mdata - mX)), MAE=$err, convergence=$C, normsq=$(sum(mdata .^2)), $(mX[1])")
+            @info("Iteration $i: Diff=$(sum(mdata - mX)), MAE=$err, MSS=$(sum(mdata .^2)), convergence=$C")
         end
 
         # Update missing values
