@@ -40,9 +40,9 @@ function impute!(imp::SVD, ctx::Context, data::AbstractMatrix{<:Union{T, Missing
     # Fill in the original data
     impute!(imp.init, ctx, data)
 
-    C = sum((mdata - mX) .^ 2) / sum(mdata .^ 2)
+    C = sum(abs2, mdata - mX) / sum(abs2, mdata)
     err = mean(abs.(odata - oX))
-    @info("Before: Diff=$(sum(mdata - mX)), MAE=$err, convergence=$C, normsq=$(sum(mdata .^ 2)), $(mX[1])")
+    @info("Before: Diff=$(sum(mdata - mX)), MAE=$err, convergence=$C, normsq=$(sum(abs2, mdata)), $(mX[1])")
 
     for i in 1:imp.maxiter
         if imp.rank === nothing
@@ -66,12 +66,12 @@ function impute!(imp::SVD, ctx::Context, data::AbstractMatrix{<:Union{T, Missing
         oX = X[omask]
 
         # println(join([size(mdata), size(mX)], ", "))
-        C = sum((mdata - mX) .^ 2) / sum(mdata .^ 2)
+        C = sum(abs2, mdata - mX) / sum(abs2, mdata)
 
         # Print the error between reconstruction and observed inputs
         if imp.verbose
             err = mean(abs.(odata - oX))
-            @info("Iteration $i: Diff=$(sum(mdata - mX)), MAE=$err, MSS=$(sum(mdata .^2)), convergence=$C")
+            @info("Iteration $i: Diff=$(sum(mdata - mX)), MAE=$err, MSS=$(sum(abs2, mdata)), convergence=$C")
         end
 
         # Update missing values
